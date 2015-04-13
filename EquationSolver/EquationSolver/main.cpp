@@ -5,66 +5,49 @@
 
 using namespace std;
 
+#define BISECTION 1
+#define SECANT 2
+#define FALSEP 3
+#define NEWTON 4
+
+const double EPSILON = 0.0000001;
+const int MAX_ITERATIONS = 100;
+
+class incompatibleMethodException : public exception {
+public:
+	virtual const char* what() const throw() {
+		return "The selected method cannot solve the selected equation";
+	}
+};
+
 class divideByZeroException : public exception {
+public:
 	virtual const char* what() const throw() {
 		return "Cannot divide by zero";
 	}
 };
 
-typedef std::function<double(double)> Formula;
+struct Solution {
+	double root;
+	double error;
+	int iterations;
+};
 
+typedef function<double(double)> Formula;
+
+void initFormulae();
 void displayEquationsMenu();
 void displayMethodsMenu();
+void displayExitMenu();
 int getSelection(int min, int max);
 
-double findRootByBisection(Formula fx, double x0, double x1, double eps);
-double findRootBySecant(Formula fx, double x0, double x1, double eps);
-double findRootByFalsePosition(Formula fx, double x0, double x1, double eps);
-double findRootByNewton(Formula fx, Formula dfx, double x0, double eps);
+bool rootExists(Formula fx, double xl, double xh);
+Solution findRootByBisection(Formula fx);
+Solution findRootBySecant(Formula fx);
+Solution findRootByFalsePosition(Formula fx);
+Solution findRootByNewton(Formula fx, Formula dfx);
 
-Formula f1 = [](double x) {
-	return (pow(x, 3) - 8 * pow(x, 2) + 12 * x - 4);
-};
-
-Formula f2 = [](double x) {
-	return (-12 - 21 * x + 18 * pow(x, 2) - 2.75 * pow(x, 3));
-};
-
-Formula f3 = [](double x) {
-	return (6 * x - 4 * pow(x, 2) + 0.5 * pow(x, 3) - 2);
-};
-
-Formula f4 = [](double x) {
-	return log(pow(x, 4)) - 0.7;
-};
-
-Formula f5 = [](double x) {
-	return (7 * sin(x) - exp(x));
-};
-
-Formula df1 = [](double x) {
-	return (3 * pow(x, 3) - 16 * x + 12);
-};
-
-
-
-Formula df2 = [](double x) {
-	return (-21 + 36 * x - 8.25 * pow(x, 2));
-};
-
-Formula df3 = [](double x) {
-	return (6 - 8 * x + 1.5 * pow(x, 2));
-};
-
-Formula df4 = [](double x) {
-	if (x == 0)
-		throw divideByZeroException();
-	return (3 / x);
-};
-
-Formula df5 = [](double x) {
-	return (7 * cos(x) - exp(x));
-};
+Formula formulae[6], dformulae[6], f1, f2, f3, f4, f5, df1, df2, df3, df4, df5;
 
 void testRealRoots() {
 	cout << "1) " << f1(0.474572) << "  " << f1(1.3691) << endl
@@ -77,25 +60,110 @@ void testRealRoots() {
 }
 
 int main(int argc, char **argv) {
-	bool quit = false;
-
+	initFormulae();
 	while (1){
+		system("cls");
 		displayEquationsMenu();
 		int selectedEquation = getSelection(1, 6);
 		if (selectedEquation == 6)
 			exit(0);
+		
+		while (1){
+			system("cls");
+			displayMethodsMenu();
+			int selectedMethod = getSelection(1, 6);
+			if (selectedMethod == 6)
+				exit(0);
+			else if (selectedMethod != 5){
+				try{
+					Solution solution;
+					switch (selectedMethod){
+					case BISECTION:
+						cout << "Solving using Bisection method: " << endl;
+						solution = findRootByBisection(formulae[selectedEquation]);
+						break;
+					case SECANT:
+						cout << "Solving using Secant Method: " << endl;
+						solution = findRootBySecant(formulae[selectedEquation]);
+						break;
+					case FALSEP:
+						cout << "Solving using False-Position Method: " << endl;
+						solution = findRootByFalsePosition(formulae[selectedEquation]);
+						break;
+					case NEWTON:
+						cout << "Solving using Newton-Raphson Method: " << endl;
+						solution = findRootByNewton(formulae[selectedEquation], dformulae[selectedEquation]);
+					}
+					system("cls");
+					cout << "Solution of the selected equation using the selected method is: " << endl
+						<< "x = " << solution.root << endl
+						<< "Error: " << solution.error * 100.0 << "%" << endl
+						<< "Number of iterations: " << solution.iterations << endl;
 
-		system("cls");
+				} catch (divideByZeroException &e){
+					cout << e.what();
+				} catch (incompatibleMethodException &e){
+					cout << e.what();
+				}
 
-		displayMethodsMenu();
-		int selectedMethod = getSelection(1, 6);
-		if (selectedMethod == 6)
-			exit(0);
-		else if (selectedMethod != 5){
-			cout << "Solution.." << endl;
+				system("pause");
+				system("cls");
+
+				displayExitMenu();
+				int exitOption = getSelection(1, 3);
+				if (exitOption == 3)
+					exit(0);
+				else if (exitOption == 2)
+					break;
+			} else
+				break;
 		}
 	}
 	return 0;
+}
+
+void initFormulae() {
+	formulae[1] = f1 = [](double x) {
+		return (pow(x, 3) - 8 * pow(x, 2) + 12 * x - 4);
+	};
+
+	formulae[2] = f2 = [](double x) {
+		return (-12 - 21 * x + 18 * pow(x, 2) - 2.75 * pow(x, 3));
+	};
+
+	formulae[3] = f3 = [](double x) {
+		return (6 * x - 4 * pow(x, 2) + 0.5 * pow(x, 3) - 2);
+	};
+
+	formulae[4] = f4 = [](double x) {
+		return log(pow(x, 4)) - 0.7;
+	};
+
+	formulae[5] = f5 = [](double x) {
+		return (7 * sin(x) - exp(x));
+	};
+
+	dformulae[1] = df1 = [](double x) {
+		return (3 * pow(x, 3) - 16 * x + 12);
+	};
+
+	dformulae[2] = df2 = [](double x) {
+		return (-21 + 36 * x - 8.25 * pow(x, 2));
+	};
+
+	dformulae[3] = df3 = [](double x) {
+		return (6 - 8 * x + 1.5 * pow(x, 2));
+	};
+
+	dformulae[4] = df4 = [](double x) {
+		if (x == 0)
+			throw divideByZeroException();
+		return (3 / x);
+	};
+
+	dformulae[5] = df5 = [](double x) {
+		return (7 * cos(x) - exp(x));
+	};
 }
 
 void displayEquationsMenu() {
@@ -118,6 +186,13 @@ void displayMethodsMenu() {
 		<< "6) Quit." << endl;
 }
 
+void displayExitMenu() {
+	cout << "Select one of the following actions:" << endl
+		<< "1) Solve with another method." << endl
+		<< "2) Solve another equation." << endl
+		<< "3) Quit." << endl;
+}
+
 int getSelection(int min, int max) {
 	char selection = ' ';
 	bool selected = false;
@@ -136,4 +211,80 @@ int getSelection(int min, int max) {
 	buf[1] = 0;
 
 	return atoi(buf);
+}
+
+bool rootExists(Formula fx, double xl, double xh) {
+	return (fx(xl) * fx(xh) <= 0);
+}
+
+Solution findRootByBisection(Formula fx) {
+	double xl, xh, oldRoot = 0, newRoot = 0, error = DBL_MAX;
+	Solution solution;
+	do{
+		cout << "Enter the lower bound guess: ";
+		cin >> xl;
+		cout << "Enter the higher bound guess: ";
+		cin >> xh;
+		if (!rootExists(fx, xl, xh))
+			cout << "No root is found between the specified boundaries or the boundaries enclose two roots." << endl;
+		else
+			oldRoot = (xl + xh) / 2.0;
+	} while(!rootExists(fx, xl, xh));
+
+	int iterations = 0;
+	while (error > EPSILON && iterations < MAX_ITERATIONS && fx(newRoot) != 0){
+		if (rootExists(fx, xl, oldRoot)){
+			newRoot = (xl + oldRoot) / 2.0;
+		} else if (rootExists(fx, oldRoot, xh) ){
+			newRoot = (oldRoot + xh) / 2.0;
+		} else{
+			cout << "Unexpected error." << endl;
+			exit(1);
+		}
+
+		if (rootExists(fx, xl, newRoot))
+			xh = newRoot;
+		else if (rootExists(fx, newRoot, xh))
+			xl = newRoot;
+		else{
+			cout << "Unexpected error." << endl;
+			exit(1);
+		}
+
+		error = ((oldRoot - newRoot) / newRoot);
+
+		if (error < 0)
+			error *= -1;
+
+		oldRoot = newRoot;
+		iterations++;
+	}
+	solution.root = newRoot;
+	solution.error = error;
+	solution.iterations = iterations;
+	return solution;
+}
+
+Solution findRootBySecant(Formula fx) {
+	Solution solution;
+	solution.error = 0;
+	solution.root = 0;
+	solution.iterations = 0;
+	return solution;
+}
+
+Solution findRootByFalsePosition(Formula fx) {
+	Solution solution;
+	solution.error = 0;
+	solution.root = 0;
+	solution.iterations = 0;
+	return solution;
+}
+
+Solution findRootByNewton(Formula fx, Formula dfx) {
+	Solution solution;
+	solution.error = 0;
+	solution.root = 0;
+	solution.iterations = 0;
+	return solution;
 }
