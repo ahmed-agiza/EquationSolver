@@ -16,7 +16,7 @@ const int MAX_ITERATIONS = 100;
 class incompatibleMethodException : public exception {
 public:
 	virtual const char* what() const throw() {
-		return "The selected method cannot solve the selected equation";
+		return "The selected method cannot solve the selected equation or very slow.";
 	}
 };
 
@@ -24,6 +24,13 @@ class divideByZeroException : public exception {
 public:
 	virtual const char* what() const throw() {
 		return "Cannot divide by zero";
+	}
+};
+
+class logZeroException : public exception {
+public:
+	virtual const char* what() const throw() {
+		return "Cannot compute ln(0).";
 	}
 };
 
@@ -97,13 +104,15 @@ int main(int argc, char **argv) {
 					system("cls");
 					cout << "Solution of the selected equation using the selected method is: " << endl
 						<< "x = " << solution.root << endl
-						<< "Error: " << solution.error * 100.0 << "%" << endl
+						<< "Error: ~" << solution.error * 100.0 << " %" << endl
 						<< "Number of iterations: " << solution.iterations << endl;
 
 				} catch (divideByZeroException &e){
-					cout << e.what();
+					cout << e.what() << endl;
 				} catch (incompatibleMethodException &e){
-					cout << e.what();
+					cout << e.what() << endl;
+				} catch (logZeroException &e){
+					cout << e.what() << endl;
 				}
 
 				system("pause");
@@ -136,6 +145,8 @@ void initFormulae() {
 	};
 
 	formulae[4] = f4 = [](double x) {
+		if (pow(x, 4) == 0)
+			throw logZeroException();
 		return log(pow(x, 4)) - 0.7;
 	};
 
@@ -220,6 +231,9 @@ bool rootExists(Formula fx, double xl, double xh) {
 Solution findRootByBisection(Formula fx) {
 	double xl, xh, oldRoot = 0, newRoot = 0, error = DBL_MAX;
 	Solution solution;
+	solution.error = 0;
+	solution.iterations = 0;
+
 	do{
 		cout << "Enter the lower bound guess: ";
 		cin >> xl;
@@ -232,7 +246,9 @@ Solution findRootByBisection(Formula fx) {
 	} while(!rootExists(fx, xl, xh));
 
 	int iterations = 0;
-	while (error > EPSILON && iterations < MAX_ITERATIONS && fx(newRoot) != 0){
+	while (error > EPSILON && fx(newRoot) != 0){
+		if (iterations > MAX_ITERATIONS)
+			throw incompatibleMethodException();
 		if (rootExists(fx, xl, oldRoot)){
 			newRoot = (xl + oldRoot) / 2.0;
 		} else if (rootExists(fx, oldRoot, xh) ){
@@ -260,16 +276,55 @@ Solution findRootByBisection(Formula fx) {
 		iterations++;
 	}
 	solution.root = newRoot;
-	solution.error = error;
+	if (fx(newRoot) != 0)
+		solution.error = error;
 	solution.iterations = iterations;
 	return solution;
 }
 
 Solution findRootBySecant(Formula fx) {
+	double oldRoot0, oldRoot1, newRoot = 0, error = DBL_MAX;
 	Solution solution;
 	solution.error = 0;
-	solution.root = 0;
 	solution.iterations = 0;
+
+	auto nextRoot = [](Formula fxn, double x0, double x1) {
+		double numerator = (x1 - x0);
+		double denumerator = fxn(x1) - fxn(x0);
+		
+		if (denumerator <= numeric_limits<double>::epsilon() && denumerator > 0)
+			return x1;
+		else if (denumerator == 0)
+			throw divideByZeroException();
+		return x1 - (fxn(x1) * (numerator / denumerator));
+	};
+
+
+	
+	cout << "Enter the lower bound guess: ";
+	cin >> oldRoot0;
+	cout << "Enter the higher bound guess: ";
+	cin >> oldRoot1;
+	
+	oldRoot1 = nextRoot(fx, oldRoot0, oldRoot1);
+	int iterations = 0;
+	while (error > EPSILON && fx(newRoot) != 0){
+		if (iterations > MAX_ITERATIONS)
+			throw incompatibleMethodException();
+		newRoot = nextRoot(fx, oldRoot0, oldRoot1);
+
+		error = ((oldRoot1 - newRoot) / newRoot);
+		if (error < 0)
+			error *= -1;
+
+		oldRoot0 = oldRoot1;
+		oldRoot1 = newRoot;
+		iterations++;
+	}
+	solution.root = newRoot;
+	if (fx(newRoot) != 0)
+		solution.error = error;
+	solution.iterations = iterations;
 	return solution;
 }
 
