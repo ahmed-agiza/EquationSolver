@@ -388,6 +388,13 @@ Solution findRootByJacobi(Equation e0, Equation e1, Equation e2) { //Computing t
 		   x0n = 0, x1n = 0, x2n = 0, //Next guesses.
 		   err0 = DBL_MAX, err1 = DBL_MAX, err2 = DBL_MAX, maxErr = DBL_MAX; //Errors.
 
+	cout << "Initial guess for x1: ";
+	cin >> x0;
+	cout << "Initial guess for x2: ";
+	cin >> x1;
+	cout << "Initial guess for x3: ";
+	cin >> x2;
+
 	int iterations = 0; //Iterations count.
 
 	while (maxErr > EPSILON && iterations < MAX_ITERATIONS && !validSolution(e0, e1, e2, x0, x1, x2)){ //ITerations loop.

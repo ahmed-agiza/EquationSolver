@@ -136,7 +136,7 @@ int main(int argc, char **argv) {
 	}
 	return 0;
 }
-
+int jj = 0;
 void initFormulae() {
 	formulae[1] = [](double x) {
 		return (pow(x, 3) - 8 * pow(x, 2) + 12 * x - 4); //First Equation.
@@ -235,7 +235,7 @@ bool rootExists(Formula fx, double xl, double xh) { //Checking the Existence of 
 }
 
 Solution findRootByBisection(Formula fx) { //Computing the root using Bisection Method. 
-	double xl, xh, oldRoot = 0, newRoot = 0, error = DBL_MAX;
+	double xl, xh, oldRoot = 0, newRoot = 1, error = DBL_MAX;
 	Solution solution;
 	solution.error = 0;
 	solution.iterations = 0;
@@ -252,7 +252,7 @@ Solution findRootByBisection(Formula fx) { //Computing the root using Bisection 
 	} while(!rootExists(fx, xl, xh)); //Validating Existence of root between the guesses.
 
 	int iterations = 0; //Number of iterations.
-	while (error > EPSILON && fx(newRoot) != 0){ //Iterations loop.
+	while (error > EPSILON){ //Iterations loop.
 		if (iterations > MAX_ITERATIONS)
 			throw incompatibleMethodException();
 		if (rootExists(fx, xl, oldRoot)){
@@ -284,12 +284,14 @@ Solution findRootByBisection(Formula fx) { //Computing the root using Bisection 
 	solution.root = newRoot;
 	if (fx(newRoot) != 0)
 		solution.error = error;
+	else
+		solution.error = 0;
 	solution.iterations = iterations;
 	return solution;
 }
 
 Solution findRootBySecant(Formula fx) { //Computing the root using Secant Method.
-	double oldRoot0, oldRoot1, newRoot = 0, error = DBL_MAX;
+	double oldRoot0, oldRoot1, newRoot = 1, error = DBL_MAX;
 	Solution solution;
 	solution.error = 0;
 	solution.iterations = 0;
@@ -316,7 +318,7 @@ Solution findRootBySecant(Formula fx) { //Computing the root using Secant Method
 	
 	oldRoot1 = nextRoot(fx, oldRoot0, oldRoot1); //Initial computation.
 	int iterations = 0;
-	while (error > EPSILON && fx(newRoot) != 0){ //Iterations loop.
+	while (error > EPSILON){ //Iterations loop.
 		if (iterations > MAX_ITERATIONS)
 			throw incompatibleMethodException();
 		newRoot = nextRoot(fx, oldRoot0, oldRoot1); //Computing next root.
@@ -332,12 +334,14 @@ Solution findRootBySecant(Formula fx) { //Computing the root using Secant Method
 	solution.root = newRoot;
 	if (fx(newRoot) != 0)
 		solution.error = error;
+	else
+		solution.error = 0;
 	solution.iterations = iterations;
 	return solution;
 }
 
 Solution findRootByFalsePosition(Formula fx) { //Computing the root using False-Position Method.
-	double xl, xh, oldRoot = 0, newRoot = 0, error = DBL_MAX;
+	double xl, xh, oldRoot, newRoot = 1, error = DBL_MAX;
 	Solution solution;
 	solution.error = 0;
 	solution.iterations = 0;
@@ -366,7 +370,7 @@ Solution findRootByFalsePosition(Formula fx) { //Computing the root using False-
 	} while (!rootExists(fx, xl, xh));
 
 	int iterations = 0;
-	while (error > EPSILON && fx(newRoot) != 0){ //Iterations loop.
+	while (error > EPSILON){ //Iterations loop.
 		if (iterations > MAX_ITERATIONS)
 			throw incompatibleMethodException();
 		if (rootExists(fx, xl, oldRoot)){ //Checking the new sub-interval.
@@ -396,14 +400,16 @@ Solution findRootByFalsePosition(Formula fx) { //Computing the root using False-
 		iterations++;
 	}
 	solution.root = newRoot;
-	if (fx(newRoot) != 0)
+	if(fx(newRoot) != 0)
 		solution.error = error;
+	else
+		solution.error = 0;
 	solution.iterations = iterations;
 	return solution;
 }
 
 Solution findRootByNewton(Formula fx, Formula dfx) {//Computing the root using Newton-Raphson Method.
-	double x0, newRoot = 0, error = DBL_MAX;
+	double x0, newRoot = 1, error = DBL_MAX;
 	Solution solution;
 	solution.error = 0;
 	solution.iterations = 0;
@@ -427,7 +433,7 @@ Solution findRootByNewton(Formula fx, Formula dfx) {//Computing the root using N
 	
 
 	int iterations = 0;
-	while (error > EPSILON && fx(newRoot) != 0){ //Itertaions loop.
+	while (error > EPSILON){ //Itertaions loop.
 		if (iterations > MAX_ITERATIONS)
 			throw incompatibleMethodException();
 		newRoot = nextRoot(fx, dfx, x0); //Computing next root.
@@ -443,6 +449,8 @@ Solution findRootByNewton(Formula fx, Formula dfx) {//Computing the root using N
 	solution.root = newRoot;
 	if (fx(newRoot) != 0)
 		solution.error = error;
+	else
+		solution.error = 0;
 	solution.iterations = iterations;
 	return solution;
 }
