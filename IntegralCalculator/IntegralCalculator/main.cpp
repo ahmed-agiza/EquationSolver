@@ -69,15 +69,15 @@ Point samplePoints[7] = {
 };
 
 Point3D samplePoints3D[9] = {
-	Point3D(0, 0, 72), //0
-	Point3D(0, 4, 64), //1
-	Point3D(0, 8, 24), //2
-	Point3D(3, 0, 54), //3
-	Point3D(3, 4, 70), //4
-	Point3D(3, 8, 54), //5
-	Point3D(6, 0, 0),  //6
-	Point3D(6, 4, 40), //7
-	Point3D(6, 8, 48)  //8
+	Point3D(0, 0, 72),
+	Point3D(3, 0, 54),
+	Point3D(6, 0, 0),
+	Point3D(0, 4, 64),
+	Point3D(3, 4, 70),
+	Point3D(6, 4, 40),
+	Point3D(0, 8, 24),
+	Point3D(3, 8, 54),
+	Point3D(6, 8, 48) 
 };
 
 //----Helper Functions----------
@@ -255,16 +255,16 @@ double simpson13(Point *points, int ni, int nf) { //Computing Integral using Sim
 	double fodd = 0;
 	for (int i = ni + 1; i < nf; i += 2) //f(x_i) where i is odd.
 		fodd += points[i].y;
-	fodd *= 4;
+	fodd *= 4.0;
 
 	double feven = 0;
 	for (int i = ni + 2; i < nf; i += 2) //f(x_i) where i is even.
 		feven += points[i].y;
-	feven *= 2;
+	feven *= 2.0;
 
 	result += (feven + fodd);
 	
-	result /= (3.0 * (nf - ni)); //Divide by 3n.
+	result /= 3.0 * (nf - ni); //Divide by 3n.
 
 	result *= (points[nf].x - points[ni].x); //Multiply by (b - a).
 
@@ -350,25 +350,25 @@ double getIntegral(Point *points, int ni, int nf) { //Getting Integral from Samp
 
 
 double getMultipleIntegral(Point3D *points, int w, int h, int xi, int xf, int yi, int yf, int seg) { //Getting Multiple Integral from Sample Points.
-	Point xIntegrals[100]; //Integrals along the x-axis.
+	Point yIntegrals[100]; //Integrals along the y-axis.
 	double result = 0;
 	int deltax = (xf - xi) / seg;
 	int deltay = (yf - yi) / seg;
 
 
 	for (int i = 0; i <= seg; i++){
-		cout << "Computing integral along x-axis at y = " << i * deltay << "." << endl;
+		cout << "Computing integral along y-axis at x = " << i * deltax << "." << endl;
 		Point rowPoints[100];
-		for (int j = 0; j <= seg; j++){ //Collecting the points along the x-axis at y = i.
+		for (int j = 0; j <= seg; j++){ //Collecting the points along the y-axis at y = i.
 			Point3D point3d = points[i * deltay + j];
-			rowPoints[j] = Point(j * deltax, point3d.z);
+			rowPoints[j] = Point(j * deltay, point3d.z);
 		}
 		double rowIntegral = getIntegral(rowPoints, 0, seg); //Computing the integral along the x-axis at y = i.
-		xIntegrals[i] = Point(i * deltay, rowIntegral);
+		yIntegrals[i] = Point(i * deltax, rowIntegral);
 	}
 
-	cout << "Computing final integral along the y-axis." << endl;
-	result = getIntegral(xIntegrals, 0, seg); //Integrating the results along the y-axis.
+	cout << "Computing final integral along the x-axis." << endl;
+	result = getIntegral(yIntegrals, 0, seg); //Integrating the results along the x-axis.
 
 	return result;
 }
