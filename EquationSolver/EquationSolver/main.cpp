@@ -136,7 +136,7 @@ int main(int argc, char **argv) {
 	}
 	return 0;
 }
-int jj = 0;
+
 void initFormulae() {
 	formulae[1] = [](double x) {
 		return (pow(x, 3) - 8 * pow(x, 2) + 12 * x - 4); //First Equation.
